@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { useTheme } from "next-themes";
 import { Menu, X, Sun, Moon, ChevronDown } from "lucide-react";
-import { useAuth } from "./AuthProvider";
+import { useAuth } from "@/components/AuthProvider";
 import { dashLinks } from "@/lib/nav";
 
 

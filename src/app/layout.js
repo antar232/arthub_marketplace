@@ -1,6 +1,6 @@
 import "./globals.css";
-import Providers from "@/app/components/Providers";
-import Navbar from "./components/Nabvar";
+import Providers from "@/components/Providers";
+import Navbar from "@/components/Navbar";
 
 export const metadata = {
   title: "ArtHub – Discover & Buy Original Art",

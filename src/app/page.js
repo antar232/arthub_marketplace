@@ -1,69 +1,72 @@
-import Image from "next/image";
+"use client";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+import toast from "react-hot-toast";
+import Hero from "@/components/Hero";
+import ArtCard from "@/components/ArtCard";
+import { CardSkeleton } from "@/components/ui";
+import { api, CATEGORIES } from "@/lib/api";
+
+const Section = ({ title, link, children }) => (
+  <section className="mx-auto max-w-7xl px-4 mt-16">
+    <div className="flex items-end justify-between mb-6">
+      <h2 className="text-3xl font-bold">{title}</h2>
+      {link && <Link href={link[0]} className="text-sm font-semibold text-brand">{link[1]}</Link>}
+    </div>
+    {children}
+  </section>
+);
 
 export default function Home() {
+  const [featured, setFeatured] = useState(null);
+  const [artists, setArtists] = useState(null);
+
+  useEffect(() => {
+    api("/artworks/featured").then(setFeatured).catch(() => { setFeatured([]); toast.error("Failed to load artworks"); });
+    api("/users/top-artists").then(setArtists).catch(() => setArtists([]));
+  }, []);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.js
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <>
+      <Hero />
+
+      <Section title="Featured artworks" link={["/artworks", "See all artworks"]}>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {featured === null
+            ? Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)
+            : featured.map((a, i) => (
+                <motion.div key={a._id} initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.07, duration: 0.45 }}>
+                  <ArtCard art={a} />
+                </motion.div>
+              ))}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        {featured?.length === 0 && <p className="text-muted">No artworks yet. Check back soon.</p>}
+      </Section>
+
+      <Section title="Top artists">
+        <div className="grid sm:grid-cols-3 gap-4">
+          {(artists || [null, null, null]).map((a, i) =>
+            a ? (
+              <Link key={a._id} href={`/artworks?artist=${a._id}`} className="card p-5 flex items-center gap-4 hover:border-brand transition-colors">
+                {a.avatar ? <img src={a.avatar} alt="" className="h-16 w-16 rounded-full object-cover" /> : <span className="h-16 w-16 rounded-full bg-brand-soft text-brand grid place-items-center text-2xl font-bold">{a.name[0]}</span>}
+                <div><p className="font-display font-semibold text-lg">{a.name}</p><p className="text-sm text-muted">{a.sales} {a.sales === 1 ? "sale" : "sales"}</p></div>
+              </Link>
+            ) : <div key={i} className="skeleton h-28" />
+          )}
         </div>
-      </main>
-    </div>
+        {artists?.length === 0 && <p className="text-muted">Artists will appear here once they join.</p>}
+      </Section>
+
+      <Section title="Browse by category">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {CATEGORIES.map((c) => (
+            <Link key={c} href={`/artworks?category=${encodeURIComponent(c)}`} className="card p-6 font-display text-xl font-semibold hover:bg-brand hover:text-brand-ink hover:border-brand transition-colors">
+              {c}
+            </Link>
+          ))}
+        </div>
+      </Section>
+    </>
   );
 }
